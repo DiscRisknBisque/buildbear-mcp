@@ -4,6 +4,7 @@ import { z } from "zod";
 import fetch from "node-fetch";
 
 const BB_API_BASE = "https://api.buildbear.io/v1/";
+const BB_RPC_BASE = "https://rpc.buildbear.io/";
 const BB_API_KEY = process.env.BB_API_KEY;
 const USER_AGENT = "bb-mcp/1.0";
 
@@ -450,6 +451,175 @@ server.tool(
         {
           type: "text",
           text: `Block number: ${response.result}`,
+        },
+      ],
+    };
+  },
+);
+
+/**
+ * CUSTOM RPC METHODS
+ */
+
+// Snapshot
+interface SnapshotResponse {
+  jsonrpc: string;
+  id: number;
+  result: string;
+}
+
+server.tool(
+  "snapshot",
+  "Take a snapshot of the current state of the sandbox",
+  { sandboxId: z.string() },
+  async ({ sandboxId }) => {
+    const response = await makeBBRequest<SnapshotResponse>(
+      `${BB_RPC_BASE}/${sandboxId}`,
+      "POST",
+      {
+        jsonrpc: "2.0",
+        method: "evm_snapshot",
+        params: [],
+        id: 1,
+      },
+    );
+
+    if (!response) {
+      return {
+        content: [
+          {
+            type: "text",
+            text: "Failed to take snapshot",
+          },
+        ],
+      };
+    }
+
+    return {
+      content: [
+        {
+          type: "text",
+          text: `Snapshot taken successfully: ${response.result}`,
+        },
+      ],
+    };
+  },
+);
+
+// Native Token Faucet
+interface NativeTokenFaucetResponse {
+  jsonrpc: string;
+  id: number;
+  result: NativeTokenFaucetResult;
+}
+
+interface NativeTokenFaucetResult {
+  id: string;
+  jsonrpc: string;
+  result: string;
+}
+
+server.tool(
+  "native-token-faucet",
+  "Get a native token from the faucet",
+  {
+    sandboxId: z.string(),
+    address: z.string(),
+    balance: z.string(),
+    unit: z.string().optional(),
+  },
+  async ({ sandboxId, address, balance, unit }) => {
+    const response = await makeBBRequest<NativeTokenFaucetResponse>(
+      `${BB_RPC_BASE}/${sandboxId}`,
+      "POST",
+      {
+        jsonrpc: "2.0",
+        method: "buildbear_nativeFaucet",
+        params: [
+          {
+            address: `${address}`,
+            balance: `${balance}`,
+            unit: `${unit ? unit : "wei"}`,
+          },
+        ],
+        id: 1,
+      },
+    );
+
+    if (!response) {
+      return {
+        content: [
+          {
+            type: "text",
+            text: "Failed to get native token from the faucet",
+          },
+        ],
+      };
+    }
+
+    return {
+      content: [
+        {
+          type: "text",
+          text: `Native token received: ${response.result.result}`,
+        },
+      ],
+    };
+  },
+);
+
+// ERC-20 Faucet
+interface Erc20TokenFaucetResponse {
+  jsonrpc: string;
+  id: number;
+  result: string;
+}
+
+server.tool(
+  "erc20-token-faucet",
+  "Get an ERC-20 token from the faucet",
+  {
+    sandboxId: z.string(),
+    address: z.string(),
+    token: z.string(),
+    balance: z.string(),
+    unit: z.string().optional(),
+  },
+  async ({ sandboxId, address, token, balance, unit }) => {
+    const response = await makeBBRequest<Erc20TokenFaucetResponse>(
+      `${BB_RPC_BASE}/${sandboxId}`,
+      "POST",
+      {
+        jsonrpc: "2.0",
+        method: "buildbear_ERC20Faucet",
+        params: [
+          {
+            address: `${address}`,
+            token: `${token}`,
+            balance: `${balance}`,
+            unit: `${unit ? unit : "wei"}`,
+          },
+        ],
+        id: 1,
+      },
+    );
+
+    if (!response) {
+      return {
+        content: [
+          {
+            type: "text",
+            text: "Failed to get ERC-20 token from the faucet",
+          },
+        ],
+      };
+    }
+
+    return {
+      content: [
+        {
+          type: "text",
+          text: `ERC-20 token received: ${response.result}`,
         },
       ],
     };
