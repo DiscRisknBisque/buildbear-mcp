@@ -2,10 +2,17 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
 import fetch from "node-fetch";
-import { BB_API_KEY } from "./key.js";
 
 const BB_API_BASE = "https://api.buildbear.io/v1/";
+const BB_API_KEY = process.env.BB_API_KEY;
 const USER_AGENT = "bb-mcp/1.0";
+
+// Check for API key
+if (!BB_API_KEY) {
+  throw new Error(
+    "Missing BB_API_KEY. Configure it in your MCP client environment.",
+  );
+}
 
 // Create server instance
 const server = new McpServer({
@@ -21,7 +28,7 @@ const server = new McpServer({
 async function makeBBRequest<T>(
   url: string,
   method: "GET" | "POST" | "DELETE" = "GET",
-  params: Record<string, any> = {}
+  params: Record<string, any> = {},
 ): Promise<T | null> {
   const headers = {
     "User-Agent": USER_AGENT,
@@ -90,7 +97,7 @@ server.tool(
         blockNumber,
         customChainId,
         perfund,
-      }
+      },
     );
 
     if (!response) {
@@ -112,7 +119,7 @@ server.tool(
         },
       ],
     };
-  }
+  },
 );
 
 // Fetch Sandbox Details
@@ -143,7 +150,7 @@ server.tool(
       "GET",
       {
         sandboxId,
-      }
+      },
     );
 
     if (!response) {
@@ -165,7 +172,7 @@ server.tool(
         },
       ],
     };
-  }
+  },
 );
 
 // Get Sandbox Snapshots
@@ -187,7 +194,7 @@ server.tool(
       "GET",
       {
         sandboxId,
-      }
+      },
     );
 
     if (!response) {
@@ -209,7 +216,7 @@ server.tool(
         },
       ],
     };
-  }
+  },
 );
 
 // Delete a Sandbox
@@ -225,7 +232,7 @@ server.tool(
       "DELETE",
       {
         sandboxId,
-      }
+      },
     );
 
     if (!response) {
@@ -247,7 +254,7 @@ server.tool(
         },
       ],
     };
-  }
+  },
 );
 
 // Get Available Networks
@@ -269,7 +276,7 @@ server.tool(
     const response = await makeBBRequest<Array<Network>>(
       `${BB_API_BASE}/buildbear-sandbox/chains`,
       "GET",
-      {}
+      {},
     );
 
     if (!response) {
@@ -291,7 +298,7 @@ server.tool(
         },
       ],
     };
-  }
+  },
 );
 
 /**
@@ -319,7 +326,7 @@ interface GetSourceCodeResponse {
       SwarmSource: string;
       SourceMap: string;
       isDiamond: boolean;
-    }
+    },
   ];
 }
 
@@ -334,7 +341,7 @@ server.tool(
     const response = await makeBBRequest<GetSourceCodeResponse>(
       `${BB_API_BASE}/explorer/${sandboxId}?module=contract&action=getsourcecode&address=${address}`,
       "GET",
-      {}
+      {},
     );
 
     if (!response) {
@@ -355,12 +362,12 @@ server.tool(
           text: `Contract source code: ${JSON.stringify(
             response.result[0],
             null,
-            2
+            2,
           )}`,
         },
       ],
     };
-  }
+  },
 );
 
 // Get Contract ABI
@@ -381,7 +388,7 @@ server.tool(
     const response = await makeBBRequest<GetContractAbiResponse>(
       `${BB_API_BASE}/explorer/${sandboxId}?module=contract&action=getabi&address=${address}`,
       "GET",
-      {}
+      {},
     );
 
     if (!response) {
@@ -403,7 +410,7 @@ server.tool(
         },
       ],
     };
-  }
+  },
 );
 
 // Get Block by Time
@@ -424,7 +431,7 @@ server.tool(
     const response = await makeBBRequest<GetBlockByTimeResponse>(
       `${BB_API_BASE}/explorer/${sandboxId}?module=block&action=getblocknobytime&closest=before&timestamp=${timestamp}`,
       "GET",
-      {}
+      {},
     );
 
     if (!response) {
@@ -446,10 +453,13 @@ server.tool(
         },
       ],
     };
-  }
+  },
 );
 
-// Server
+/**
+ * SERVER INITIALIZATION
+ */
+
 async function main() {
   const transport = new StdioServerTransport();
   await server.connect(transport);

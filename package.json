@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "cp src/key.js build/key.js && tsc && chmod 755 build/index.js"
+    "build": "tsc && chmod 755 build/index.js"
   },
   "keywords": [],
   "author": "",
