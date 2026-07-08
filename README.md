@@ -2,6 +2,15 @@
 
 This MCP server allows supported harnesses and LLMs to use the BuildBear API via tool calls. The documented [Sandbox API](https://www.buildbear.io/docs/api-reference/sandbox-api), [Explorer API](https://www.buildbear.io/docs/api-reference/explorer-api), and [Custom RPC Methods](https://www.buildbear.io/docs/api-reference/custom-rpc-methods) are implemented.
 
+## Contents
+
+- [Prerequisites](#prerequisites): If you need a BuildBear API key
+- Installation
+  - [Claude Desktop](#claude-desktop)
+  - [Codex Desktop](#codex-desktop)
+  - [OpenCode](#opencode)
+- [End-to-End Sandbox Workflow](#end-to-end-sandbox-workflow)
+
 ## Prerequisites
 
 1. Get a BuildBear API key from the [BuildBear dashboard](https://app.buildbear.io).
@@ -88,7 +97,7 @@ Add the server under the `mcp` key in your OpenCode config (`~/.config/opencode/
 
 You can also add the server interactively with `opencode mcp add`, then confirm it with `opencode mcp list`.
 
-## Example: Economic simulation
+## End-to-End Sandbox Workflow
 
 This example shows how an agent can spin up its own sandbox, fund a wallet, snapshot state, and execute on-chain transactions to simulate economic activity.
 
@@ -98,7 +107,7 @@ Give your agent a prompt like:
 
 > Using the BuildBear MCP tools, set up an economic simulation on a fork of Ethereum mainnet. Create a sandbox, derive a wallet from the sandbox mnemonic, fund that wallet with 10 ETH and 10,000 USDC, snapshot the initial state, then send 1 ETH to `0x70997970C51812dc3A010C7d01b50e0d17dc79C8` to simulate a payment. Report balances before and after.
 
-### Expected workflow
+### Expected Workflow
 
 1. **Create a sandbox** — `create-sandbox` with `chainId: 1` (Ethereum mainnet fork).
 2. **Fetch sandbox details** — `fetch-sandbox-details` returns the `sandboxId`, `rpcUrl`, `mnemonic`, and `explorerUrl`. The agent derives an address from the mnemonic (e.g. HD path `m/44'/60'/0'/0/0`).
@@ -107,7 +116,7 @@ Give your agent a prompt like:
 5. **Snapshot initial state** — `snapshot` so the agent can roll back and re-run scenarios from the same starting point.
 6. **Execute transactions** — send transactions against the sandbox `rpcUrl` using standard Ethereum JSON-RPC. BuildBear sandboxes expose unlocked accounts derived from the sandbox mnemonic, so the agent can sign and broadcast transfers directly.
 
-### Sending a transaction via RPC
+### Sending a Transaction via RPC
 
 After funding, the agent can transfer ETH with `eth_sendTransaction`:
 
@@ -128,7 +137,7 @@ curl -X POST "https://rpc.buildbear.io/<sandbox-id>" \
 
 The `value` field is `1 ETH` in hex wei (`0xDE0B6B3A7640000`). The agent can check balances with `eth_getBalance` and inspect the transfer in the sandbox explorer URL returned by `fetch-sandbox-details`.
 
-### Why this works for agents
+### Why This Works for Agents
 
 - **Self-funded wallets** — faucet tools let the agent mint unlimited native and ERC-20 tokens without manual setup.
 - **Isolated environment** — each simulation runs in a private fork; nothing touches a public testnet or mainnet.
